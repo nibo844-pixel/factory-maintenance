@@ -93,6 +93,34 @@ async function initDB() {
         );
     `);
 
+    // Load seed data if empty
+    const mapCount = dbGet('SELECT COUNT(*) as c FROM maps');
+    if (!mapCount || mapCount.c === 0) {
+        try {
+            const seedData = JSON.parse(fs.readFileSync(path.join(__dirname, 'seed-data.json'), 'utf8'));
+            
+            seedData.maps.forEach(m => {
+                db.run('INSERT INTO maps (id, name, image_data, image_path, sort_order) VALUES (?,?,?,?,?)',
+                    [m.id, m.name, m.image_data, '', m.sort_order || 0]);
+            });
+            
+            seedData.equipment.forEach(e => {
+                db.run('INSERT INTO equipment (id, map_id, name, code, type, status, manufacturer, model, serial, install_date, notes, pos_x, pos_y) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                    [e.id, e.map_id, e.name, e.code||'', e.type||'', e.status||'operational', e.manufacturer||'', e.model||'', e.serial||'', e.install_date||'', e.notes||'', e.pos_x||0, e.pos_y||0]);
+            });
+            
+            seedData.logs.forEach(l => {
+                db.run('INSERT INTO maintenance_log (equipment_id, log_type, title, description, technician, work_date, duration_hours, parts_used, parts_cost, next_due) VALUES (?,?,?,?,?,?,?,?,?,?)',
+                    [l.equipment_id, l.log_type, l.title, l.description||'', l.technician||'', l.work_date, l.duration_hours||null, l.parts_used||'', l.parts_cost||0, l.next_due||'']);
+            });
+            
+            saveDB();
+            console.log('  ✅ Seed data loaded');
+        } catch(e) {
+            console.log('  ⚠️ Seed load failed:', e.message);
+        }
+    }
+
     // Migration: ensure image_data column exists
     try {
         db.run("ALTER TABLE maps ADD COLUMN image_data TEXT");

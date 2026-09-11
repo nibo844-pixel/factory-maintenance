@@ -93,24 +93,22 @@ async function initDB() {
         );
     `);
 
-    // Ensure seed data exists (reload on every cold start)
+    // Ensure seed data on every start
     try {
         const seedData = JSON.parse(fs.readFileSync(path.join(__dirname, 'seed-data.json'), 'utf8'));
         
-        // Upsert maps: ensure image_data is set on ALL maps
+        // Force update ALL maps with image_data
         seedData.maps.forEach(m => {
-            const existing = dbGet('SELECT id FROM maps WHERE id = ?', [m.id]);
-            if (existing) {
-                db.run('UPDATE maps SET image_data = ?, name = ?, image_path = ? WHERE id = ?', [m.image_data, m.name, '', m.id]);
-            } else {
+            db.run('UPDATE maps SET image_data = ? WHERE id = ?', [m.image_data, m.id]);
+            // If no rows affected, insert
+            const check = dbGet('SELECT id FROM maps WHERE id = ?', [m.id]);
+            if (!check) {
                 db.run('INSERT INTO maps (id, name, image_data, image_path, sort_order) VALUES (?,?,?,?,?)',
-                    [m.id, m.name, m.image_data, '', m.sort_order || 0]);
+                    [m.id, m.name, m.image_data, '', 0]);
             }
         });
-        // Also update any other map that has image_path but no image_data
-        db.run('UPDATE maps SET image_data = ? WHERE image_data IS NULL', [seedData.maps[0].image_data]);
         
-        // Only insert equipment if empty
+        // Insert equipment if empty
         const eqCount = dbGet('SELECT COUNT(*) as c FROM equipment');
         if (!eqCount || eqCount.c === 0) {
             seedData.equipment.forEach(e => {
@@ -119,7 +117,7 @@ async function initDB() {
             });
         }
         
-        // Only insert logs if empty
+        // Insert logs if empty
         const logCount = dbGet('SELECT COUNT(*) as c FROM maintenance_log');
         if (!logCount || logCount.c === 0) {
             seedData.logs.forEach(l => {

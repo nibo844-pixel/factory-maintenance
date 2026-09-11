@@ -280,6 +280,18 @@ app.get('/api/maps/:id/image', requireAuth, (req, res) => {
     if (!map || !map.image_data) return res.status(404).json({ error: 'Not found' });
     res.json({ imageData: map.image_data });
 });
+// Update map image
+app.put('/api/maps/:id/image', requireRole('admin'), (req, res) => {
+    try {
+        const { imageData } = req.body;
+        if (!imageData) return res.status(400).json({ error: 'No image' });
+        dbRun('UPDATE maps SET image_data = ? WHERE id = ?', [imageData, parseInt(req.params.id)]);
+        res.json({ success: true });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.post('/api/maps', requireRole('admin'), (req, res) => {
     try {
         const { name, imageData } = req.body;

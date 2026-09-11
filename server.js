@@ -134,8 +134,13 @@ function dbGet(sql, params = []) {
 }
 
 function dbRun(sql, params = []) {
-    db.run(sql, params);
-    saveDB();
+    try {
+        db.run(sql, params);
+        saveDB();
+    } catch(e) {
+        console.error('DB Run Error:', sql, e.message);
+        throw e;
+    }
 }
 
 // Middleware
@@ -223,12 +228,17 @@ app.get('/api/maps/:id/image', requireAuth, (req, res) => {
     res.json({ imageData: map.image_data });
 });
 app.post('/api/maps', requireRole('admin'), (req, res) => {
-    const { name, imageData } = req.body;
-    if (!imageData) return res.status(400).json({ error: 'No image' });
-    const maxOrder = dbGet('SELECT COALESCE(MAX(sort_order),0) as m FROM maps');
-    dbRun('INSERT INTO maps (name, image_data, sort_order) VALUES (?,?,?)', [name || 'Χάρτης', imageData, (maxOrder?.m || 0) + 1]);
-    const map = dbGet('SELECT id, name FROM maps ORDER BY id DESC LIMIT 1');
-    res.json(map);
+    try {
+        const { name, imageData } = req.body;
+        if (!imageData) return res.status(400).json({ error: 'No image' });
+        const maxOrder = dbGet('SELECT COALESCE(MAX(sort_order),0) as m FROM maps');
+        dbRun('INSERT INTO maps (name, image_data, sort_order) VALUES (?,?,?)', [name || 'Χάρτης', imageData, (maxOrder?.m || 0) + 1]);
+        const map = dbGet('SELECT id, name FROM maps ORDER BY id DESC LIMIT 1');
+        res.json(map);
+    } catch(e) {
+        console.error('Map creation error:', e.message);
+        res.status(500).json({ error: 'Σφάλμα: ' + e.message });
+    }
 });
 app.delete('/api/maps/:id', requireRole('admin'), (req, res) => {
     const mapId = parseInt(req.params.id);

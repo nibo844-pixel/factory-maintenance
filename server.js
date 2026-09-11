@@ -93,13 +93,19 @@ async function initDB() {
         );
     `);
 
-    // Migration: add image_data column if missing
+    // Migration: ensure image_data column exists
     try {
         db.run("ALTER TABLE maps ADD COLUMN image_data TEXT");
         console.log('  ✅ Added image_data column');
-    } catch(e) {
-        // Column already exists, ignore
-    }
+    } catch(e) {}
+    // Update existing rows: copy image_path to image_data if needed
+    try {
+        db.run("UPDATE maps SET image_data = image_path WHERE image_data IS NULL AND image_path IS NOT NULL");
+    } catch(e) {}
+    // Make image_path nullable if it was NOT NULL
+    try {
+        db.run("UPDATE maps SET image_path = '' WHERE image_path IS NULL");
+    } catch(e) {}
 
     // Create default admin
     const adminCheck = db.exec("SELECT COUNT(*) as c FROM users WHERE username = 'admin'");
@@ -240,7 +246,7 @@ app.post('/api/maps', requireRole('admin'), (req, res) => {
         const { name, imageData } = req.body;
         if (!imageData) return res.status(400).json({ error: 'No image' });
         const maxOrder = dbGet('SELECT COALESCE(MAX(sort_order),0) as m FROM maps');
-        dbRun('INSERT INTO maps (name, image_data, sort_order) VALUES (?,?,?)', [name || 'Χάρτης', imageData, (maxOrder?.m || 0) + 1]);
+        dbRun('INSERT INTO maps (name, image_data, image_path, sort_order) VALUES (?,?,?,?)', [name || 'Χάρτης', imageData, '', (maxOrder?.m || 0) + 1]);
         const map = dbGet('SELECT id, name FROM maps ORDER BY id DESC LIMIT 1');
         res.json(map);
     } catch(e) {

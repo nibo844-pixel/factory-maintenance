@@ -1,0 +1,6 @@
+node_modules/
+data/factory.db
+data/factory.db-shm
+data/factory.db-wal
+*.zip
+PREVIEW.html

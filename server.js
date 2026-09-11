@@ -97,16 +97,18 @@ async function initDB() {
     try {
         const seedData = JSON.parse(fs.readFileSync(path.join(__dirname, 'seed-data.json'), 'utf8'));
         
-        // Upsert maps with image_data
+        // Upsert maps: ensure image_data is set on ALL maps
         seedData.maps.forEach(m => {
             const existing = dbGet('SELECT id FROM maps WHERE id = ?', [m.id]);
             if (existing) {
-                db.run('UPDATE maps SET image_data = ?, name = ? WHERE id = ?', [m.image_data, m.name, m.id]);
+                db.run('UPDATE maps SET image_data = ?, name = ?, image_path = ? WHERE id = ?', [m.image_data, m.name, '', m.id]);
             } else {
                 db.run('INSERT INTO maps (id, name, image_data, image_path, sort_order) VALUES (?,?,?,?,?)',
                     [m.id, m.name, m.image_data, '', m.sort_order || 0]);
             }
         });
+        // Also update any other map that has image_path but no image_data
+        db.run('UPDATE maps SET image_data = ? WHERE image_data IS NULL', [seedData.maps[0].image_data]);
         
         // Only insert equipment if empty
         const eqCount = dbGet('SELECT COUNT(*) as c FROM equipment');

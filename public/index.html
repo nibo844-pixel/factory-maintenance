@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1e293b">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/img/icon-192.png">
+    <title>🏭 Factory Maintenance</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h1>🏭 Factory Maintenance</h1>
+        </div>
+        <nav class="header-nav">
+            <a href="#" class="nav-link active" data-view="map">🗺️ Χάρτης</a>
+            <a href="#" class="nav-link" data-view="dashboard">📊 Dashboard</a>
+            <a href="#" class="nav-link" data-view="inventory">📦 Αποθήκη</a>
+            <a href="/FactoryApp.zip" class="nav-link" download style="color:var(--success);">⬇️ Download</a>
+        </nav>
+        <div class="header-search">
+            <input type="text" id="globalSearch" placeholder="🔍 Αναζήτηση...">
+            <div id="searchResults" class="search-results"></div>
+        </div>
+        <div class="user-menu" id="userMenu">
+            <button class="user-btn" id="userBtn" onclick="toggleUserDropdown()">
+                <span class="user-avatar" id="userAvatar">?</span>
+                <span class="user-name" id="userName">...</span>
+                <span>▾</span>
+            </button>
+            <div class="user-dropdown" id="userDropdown">
+                <div class="ud-role" id="userRole"></div>
+                <button onclick="showChangePassword()">🔑 Αλλαγή Κωδικού</button>
+                <button id="adminUsersBtn" style="display:none" onclick="openUserManagement()">👥 Χρήστες</button>
+                <hr>
+                <button class="ud-logout" onclick="logout()">🚪 Αποσύνδεση</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar (mobile) -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span>🏭 Factory Maintenance</span>
+            <button onclick="document.getElementById('sidebar').classList.remove('open')">&times;</button>
+        </div>
+        <nav>
+            <a href="#" class="sidebar-link active" data-view="map">🗺️ Χάρτης Εργοστασίου</a>
+            <a href="#" class="sidebar-link" data-view="dashboard">📊 Dashboard</a>
+            <a href="#" class="sidebar-link" data-view="inventory">📦 Αποθήκη</a>
+            <hr style="border:none;border-top:1px solid rgba(255,255,255,.1);margin:8px 0">
+            <a href="/FactoryApp.zip" class="sidebar-link" download>⬇️ Κατέβασε App (.zip)</a>
+            <a href="/FactoryApp.html" class="sidebar-link" target="_blank">📱 Standalone (.html)</a>
+        </nav>
+    </aside>
+
+    <main class="app-main">
+        <!-- MAP VIEW -->
+        <section class="view active" id="view-map">
+            <div class="map-toolbar">
+                <select id="mapSelector"><option value="">-- Φόρτωση... --</option></select>
+                <div class="toolbar-actions">
+                    <label class="btn btn-outline btn-sm" for="uploadMap">
+                        📤 Ανέβασε Σκάνταλ
+                    </label>
+                    <input type="file" id="uploadMap" accept="image/*" hidden>
+                    <button class="btn btn-primary btn-sm" id="addEquipmentBtn" disabled>+ Μηχάνημα</button>
+                    <button class="btn btn-danger btn-sm" id="deleteMapBtn" style="display:none;">🗑️ Διαγρ. Χάρτη</button>
+                </div>
+            </div>
+            <div class="map-container" id="mapContainer">
+                <div class="map-empty" id="mapEmpty">
+                    <div class="empty-icon">🗺️</div>
+                    <h3>Δεν υπάρχει σκάνταλ</h3>
+                    <p>Ανέβασε μια εικόνα του εργοστασίου για να ξεκινήσεις</p>
+                    <label class="btn btn-primary" for="uploadMap">📤 Ανέβασε Εικόνα</label>
+                    <input type="file" id="uploadMapEmpty" accept="image/*" hidden>
+                </div>
+                <div class="map-wrapper" id="mapWrapper" style="display:none;">
+                    <img id="factoryImage" src="" alt="Factory Map" draggable="false">
+                    <div id="markersLayer"></div>
+                </div>
+                <div class="map-hint" id="mapHint">💡 Κάνε κλικ πάνω στην εικόνα για να προσθέσεις μηχάνημα</div>
+            </div>
+        </section>
+
+        <!-- DASHBOARD VIEW -->
+        <section class="view" id="view-dashboard">
+            <h2>📊 Dashboard</h2>
+            <div class="stats-grid" id="statsGrid"></div>
+            <div class="dash-grid">
+                <div class="card"><h3>🔴 Πρόσφατες Εργασίες</h3><div id="recentLogs"></div></div>
+                <div class="card"><h3>⚠️ Χαμηλό Stock</h3><div id="lowStockList"></div></div>
+                <div class="card"><h3>🏭 Προβληματικά Μηχανήματα</h3><div id="problemEquip"></div></div>
+                <div class="card"><h3>📅 Επόμενες Εργασίες</h3><div id="upcomingMaint"></div></div>
+            </div>
+        </section>
+
+        <!-- INVENTORY VIEW -->
+        <section class="view" id="view-inventory">
+            <div class="page-header">
+                <h2>📦 Αποθήκη Ανταλλακτικών</h2>
+                <button class="btn btn-primary" onclick="showInventoryForm()">+ Νέο Είδος</button>
+            </div>
+            <div class="filter-bar">
+                <input type="text" id="invSearch" placeholder="🔍 Αναζήτηση..." oninput="loadInventory()">
+                <select id="invStockFilter" onchange="loadInventory()">
+                    <option value="">Όλα</option>
+                    <option value="low">Χαμηλό Stock</option>
+                    <option value="out">Εξαντλημένο</option>
+                </select>
+            </div>
+            <div id="inventoryList"></div>
+        </section>
+    </main>
+
+    <!-- EQUIPMENT PANEL (slide-in) -->
+    <div class="panel-overlay" id="panelOverlay"></div>
+    <aside class="equipment-panel" id="equipmentPanel">
+        <div class="panel-header">
+            <h2 id="panelTitle">Μηχάνημα</h2>
+            <button onclick="closeEquipmentPanel()" class="btn-close">&times;</button>
+        </div>
+        <div class="panel-body" id="panelBody"></div>
+    </aside>
+
+    <!-- ADD EQUIPMENT MODAL -->
+    <div class="modal-overlay" id="equipModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 id="equipModalTitle">Νέο Μηχάνημα</h2>
+                <button onclick="closeModal('equipModal')">&times;</button>
+            </div>
+            <form id="equipForm">
+                <input type="hidden" id="eqId">
+                <input type="hidden" id="eqPosX">
+                <input type="hidden" id="eqPosY">
+                <div class="form-group"><label>Όνομα *</label><input type="text" id="eqName" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Κωδικός</label><input type="text" id="eqCode"></div>
+                    <div class="form-group"><label>Τύπος</label><input type="text" id="eqType" placeholder="π.χ. Αντλία, Κινητήρας"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Κατασκευαστής</label><input type="text" id="eqManufacturer"></div>
+                    <div class="form-group"><label>Μοντέλο</label><input type="text" id="eqModel"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Serial</label><input type="text" id="eqSerial"></div>
+                    <div class="form-group"><label>Ημ/νία Εγκατάστασης</label><input type="date" id="eqInstallDate"></div>
+                </div>
+                <div class="form-group"><label>Σημειώσεις</label><textarea id="eqNotes" rows="2"></textarea></div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('equipModal')">Ακύρωση</button>
+                    <button type="submit" class="btn btn-primary">Αποθήκευση</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAINTENANCE LOG MODAL -->
+    <div class="modal-overlay" id="logModal">
+        <div class="modal-box modal-wide">
+            <div class="modal-header">
+                <h2 id="logModalTitle">Νέα Καταχώρηση</h2>
+                <button onclick="closeModal('logModal')">&times;</button>
+            </div>
+            <form id="logForm">
+                <input type="hidden" id="logId">
+                <input type="hidden" id="logEquipId">
+                <div class="form-row">
+                    <div class="form-group"><label>Τύπος *</label>
+                        <select id="logType" required onchange="updateLogTitle()">
+                            <option value="maintenance">🔧 Συντήρηση</option>
+                            <option value="breakdown">⚡ Βλάβη</option>
+                            <option value="repair">🔨 Επισκευή</option>
+                            <option value="inspection">👁️ Έλεγχος</option>
+                            <option value="lubrication">🛢️ Λίπανση</option>
+                            <option value="calibration">🎯 Ρύθμιση</option>
+                            <option value="other">📝 Άλλο</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Ημερομηνία *</label><input type="date" id="logDate" required></div>
+                </div>
+                <div class="form-group"><label>Τίτλος *</label><input type="text" id="logTitle" required placeholder="π.χ. Αντικατάσταση ρουλεμάν"></div>
+                <div class="form-group"><label>Περιγραφή</label><textarea id="logDescription" rows="3"></textarea></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Τεχνικός</label><input type="text" id="logTechnician"></div>
+                    <div class="form-group"><label>Διάρκεια (ώρες)</label><input type="number" id="logDuration" min="0" step="0.5"></div>
+                </div>
+                <div class="form-group"><label>Ανταλλακτικά που χρησιμοποιήθηκαν</label><input type="text" id="logPartsUsed" placeholder="π.χ. 2x ρουλεμάν 6204"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Κόστος Ανταλλακτικών (€)</label><input type="number" id="logPartsCost" min="0" step="0.01"></div>
+                    <div class="form-group"><label>Επόμενο Ραντεβού</label><input type="date" id="logNextDue"></div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('logModal')">Ακύρωση</button>
+                    <button type="submit" class="btn btn-primary">Αποθήκευση</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- INVENTORY MODAL -->
+    <div class="modal-overlay" id="invModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 id="invModalTitle">Νέο Είδος</h2>
+                <button onclick="closeModal('invModal')">&times;</button>
+            </div>
+            <form id="invForm">
+                <input type="hidden" id="invId">
+                <div class="form-row">
+                    <div class="form-group"><label>Όνομα *</label><input type="text" id="invName" required></div>
+                    <div class="form-group"><label>Κωδικός</label><input type="text" id="invCode"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Ποσότητα *</label><input type="number" id="invQty" required min="0"></div>
+                    <div class="form-group"><label>Ελάχιστο Stock</label><input type="number" id="invMinStock" min="0" value="5"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Τιμή (€)</label><input type="number" id="invPrice" min="0" step="0.01"></div>
+                    <div class="form-group"><label>Μονάδα</label>
+                        <select id="invUnit"><option>τεμ</option><option>kg</option><option>lt</option><option>m</option><option>σετ</option></select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Προμηθευτής</label><input type="text" id="invSupplier"></div>
+                    <div class="form-group"><label>Τοποθεσία</label><input type="text" id="invLocation" placeholder="π.χ. Ράφι Α3"></div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('invModal')">Ακύρωση</button>
+                    <button type="submit" class="btn btn-primary">Αποθήκευση</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- CHANGE PASSWORD MODAL -->
+    <div class="modal-overlay" id="pwModal">
+        <div class="modal-box">
+            <div class="modal-header"><h2>🔑 Αλλαγή Κωδικού</h2><button onclick="closeModal('pwModal')">&times;</button></div>
+            <form id="pwForm">
+                <div class="form-group"><label>Τρέχων Κωδικός *</label><input type="password" id="pwOld" required></div>
+                <div class="form-group"><label>Νέος Κωδικός * (min 6)</label><input type="password" id="pwNew" required minlength="6"></div>
+                <div class="form-group"><label>Επιβεβαίωση Νέου *</label><input type="password" id="pwConfirm" required></div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('pwModal')">Ακύρωση</button>
+                    <button type="submit" class="btn btn-primary">Αποθήκευση</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- USER MANAGEMENT MODAL -->
+    <div class="modal-overlay" id="usersModal">
+        <div class="modal-box modal-wide">
+            <div class="modal-header"><h2>👥 Διαχείριση Χρηστών</h2><button onclick="closeModal('usersModal')">&times;</button></div>
+            <div style="padding:16px 20px;">
+                <button class="btn btn-primary btn-sm" onclick="showAddUserForm()">+ Νέος Χρήστης</button>
+                <div id="addUserForm" style="display:none;margin:12px 0;padding:14px;background:var(--gray-50);border-radius:8px;">
+                    <div class="form-row">
+                        <div class="form-group"><label>Username</label><input type="text" id="newUserName" required></div>
+                        <div class="form-group"><label>Ονοματεπώνυμο</label><input type="text" id="newUserFullName"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Κωδικός (min 6)</label><input type="password" id="newUserPass" required minlength="6"></div>
+                        <div class="form-group"><label>Ρόλος</label>
+                            <select id="newUserRole">
+                                <option value="technician">Τεχνικός</option>
+                                <option value="supervisor">Επόπτης</option>
+                                <option value="admin">Διαχειριστής</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;justify-content:flex-end;">
+                        <button class="btn btn-outline btn-sm" onclick="document.getElementById('addUserForm').style.display='none'">Ακύρωση</button>
+                        <button class="btn btn-primary btn-sm" onclick="createUser()">Δημιουργία</button>
+                    </div>
+                </div>
+                <div id="usersList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+</html>

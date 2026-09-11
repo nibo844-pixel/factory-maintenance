@@ -1,0 +1,51 @@
+{
+  "name": "factory-maintenance",
+  "version": "1.0.0",
+  "description": "Σύστημα Διαχείρισης Συντήρησης Εργοστασίου",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "build": "electron-builder --win portable",
+    "build-installer": "electron-builder --win nsis"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.4.1",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "electron": "^38.2.0"
+  },
+  "build": {
+    "appId": "com.factory.maintenance",
+    "productName": "Factory Maintenance",
+    "directories": { "output": "dist" },
+    "files": [
+      "main.js",
+      "server.js",
+      "public/**/*",
+      "node_modules/**/*"
+    ],
+    "extraResources": [],
+    "win": {
+      "target": ["portable"],
+      "icon": "public/img/icon.png"
+    },
+    "portable": {
+      "unicode": true,
+      "artifactName": "FactoryMaintenance-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Factory Maintenance"
+    }
+  }
+}

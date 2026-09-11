@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1e293b">
+<title>🏭 Factory Maintenance</title>
+<style>
+:root{--primary:#2563eb;--primary-dark:#1d4ed8;--primary-light:#dbeafe;--success:#16a34a;--success-light:#dcfce7;--danger:#dc2626;--danger-light:#fee2e2;--warning:#ea580c;--warning-light:#fff7ed;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827;--header-h:56px;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.1);--shadow-lg:0 10px 25px -5px rgba(0,0,0,.15)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--gray-100);color:var(--gray-800);line-height:1.6}
+.app-header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:#fff;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;padding:0 16px;z-index:100;gap:12px}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-left h1{font-size:.95rem;font-weight:700;white-space:nowrap}
+.menu-toggle{display:none;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--gray-600)}
+.header-nav{display:flex;gap:4px;margin-left:8px}
+.nav-link{padding:6px 12px;border-radius:8px;text-decoration:none;color:var(--gray-500);font-size:.8rem;font-weight:600;transition:all .2s;cursor:pointer}
+.nav-link:hover{background:var(--gray-100);color:var(--gray-700)}
+.nav-link.active{background:var(--primary-light);color:var(--primary)}
+.user-menu{margin-left:auto;position:relative}
+.user-btn{display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px;font-size:.82rem;color:var(--gray-600)}
+.user-btn:hover{background:var(--gray-100)}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700}
+.user-dropdown{position:absolute;top:100%;right:0;margin-top:8px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);border:1px solid var(--gray-200);min-width:170px;z-index:500;display:none;padding:4px}
+.user-dropdown.show{display:block}
+.user-dropdown button{width:100%;text-align:left;padding:8px 12px;background:none;border:none;cursor:pointer;font-size:.82rem;color:var(--gray-700);border-radius:6px;display:flex;align-items:center;gap:6px}
+.user-dropdown button:hover{background:var(--gray-100)}
+.ud-role{padding:6px 12px;font-size:.68rem;color:var(--gray-400);text-transform:uppercase;font-weight:700}
+.ud-logout{color:var(--danger)!important}
+.ud-logout:hover{background:var(--danger-light)!important}
+.user-dropdown hr{border:none;border-top:1px solid var(--gray-200);margin:4px 0}
+.sidebar{position:fixed;top:0;left:-260px;width:240px;height:100vh;background:var(--gray-900);color:#fff;z-index:300;transition:left .3s;display:flex;flex-direction:column}
+.sidebar.open{left:0}
+.sidebar-header{padding:16px;display:flex;justify-content:space-between;align-items:center;font-weight:700;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-header button{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer}
+.sidebar nav{padding:10px}
+.sidebar-link{display:block;padding:10px 14px;color:rgba(255,255,255,.7);text-decoration:none;border-radius:8px;font-size:.88rem;margin-bottom:2px}
+.sidebar-link:hover,.sidebar-link.active{background:rgba(255,255,255,.1);color:#fff}
+.app-main{margin-top:var(--header-h);padding:16px;min-height:calc(100vh - var(--header-h))}
+.view{display:none}.view.active{display:block}
+.view h2{font-size:1.2rem;margin-bottom:14px}
+.map-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.map-toolbar select{padding:7px 10px;border:1px solid var(--gray-300);border-radius:8px;font-size:.85rem}
+.toolbar-actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn{padding:8px 16px;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:4px;text-decoration:none}
+.btn-sm{padding:5px 12px;font-size:.78rem}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+.btn-outline{background:transparent;border:1.5px solid var(--gray-300);color:var(--gray-600)}.btn-outline:hover{background:var(--gray-50)}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#b91c1c}
+.map-container{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;position:relative;min-height:350px;display:flex;align-items:center;justify-content:center}
+.map-empty{text-align:center;padding:40px 16px;color:var(--gray-400)}
+.empty-icon{font-size:3rem;margin-bottom:8px}
+.map-empty h3{color:var(--gray-600);margin-bottom:6px}
+.map-empty p{margin-bottom:16px;font-size:.85rem}
+.map-wrapper{position:relative;width:100%;line-height:0}
+#factoryImage{max-width:100%;height:auto;user-select:none;-webkit-user-drag:none;cursor:crosshair;display:block}
+#markersLayer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.marker{position:absolute;width:30px;height:30px;border-radius:50%;transform:translate(-50%,-50%);cursor:pointer;pointer-events:auto;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fff;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);transition:transform .15s;z-index:5}
+.marker:hover{transform:translate(-50%,-50%) scale(1.2);z-index:10}
+.marker-operational{background:var(--success)}
+.marker-breakdown{background:var(--danger);animation:pulse-red 2s infinite}
+.marker-maintenance{background:var(--warning)}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}50%{box-shadow:0 0 0 8px rgba(220,38,38,0)}}
+.map-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:6px 14px;border-radius:16px;font-size:.75rem;pointer-events:none;white-space:nowrap}
+.panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400;display:none}
+.panel-overlay.active{display:block}
+.equipment-panel{position:fixed;top:0;right:-400px;width:380px;max-width:90vw;height:100vh;background:#fff;z-index:401;box-shadow:-4px 0 20px rgba(0,0,0,.15);transition:right .3s ease;display:flex;flex-direction:column}
+.equipment-panel.active{right:0}
+.panel-header{padding:14px 18px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.panel-header h2{font-size:1rem;font-weight:700}
+.btn-close{background:none;border:none;font-size:1.5rem;cursor:pointer;color:inherit;padding:0 4px}
+.panel-body{flex:1;overflow-y:auto;padding:16px}
+.eq-status-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.eq-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;font-size:.82rem}
+.eq-info-item{padding:6px;background:var(--gray-50);border-radius:6px}
+.eq-info-label{font-size:.68rem;color:var(--gray-400);text-transform:uppercase;font-weight:700}
+.eq-info-value{color:var(--gray-800);font-weight:500}
+.section-title{font-size:.9rem;font-weight:700;color:var(--gray-700);margin:16px 0 8px;display:flex;justify-content:space-between;align-items:center}
+.log-entry{border-left:3px solid var(--gray-300);padding:8px 12px;margin-bottom:8px;border-radius:0 6px 6px 0;background:var(--gray-50)}
+.log-entry.log-maintenance{border-color:var(--success)}
+.log-entry.log-breakdown{border-color:var(--danger)}
+.log-entry.log-repair{border-color:var(--primary)}
+.log-entry.log-inspection{border-color:var(--gray-400)}
+.log-entry.log-lubrication{border-color:#0891b2}
+.log-entry.log-calibration{border-color:#7c3aed}
+.log-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px}
+.log-title{font-weight:600;font-size:.85rem}
+.log-date{font-size:.72rem;color:var(--gray-400);white-space:nowrap}
+.log-desc{font-size:.8rem;color:var(--gray-500);margin-top:3px}
+.log-meta{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.log-tag{font-size:.68rem;padding:2px 6px;border-radius:10px;background:var(--gray-200);color:var(--gray-600)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:14px;text-align:center;box-shadow:var(--shadow);border-left:4px solid var(--gray-300)}
+.stat-card.sc-blue{border-left-color:var(--primary)}.stat-card.sc-green{border-left-color:var(--success)}
+.stat-card.sc-red{border-left-color:var(--danger)}.stat-card.sc-orange{border-left-color:var(--warning)}
+.stat-num{font-size:1.8rem;font-weight:700}.stat-label{font-size:.75rem;color:var(--gray-400);font-weight:600}
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.card{background:#fff;border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.card h3{font-size:.9rem;font-weight:700;margin-bottom:10px;color:var(--gray-600)}
+.dash-item{padding:6px 0;border-bottom:1px solid var(--gray-100);font-size:.82rem}
+.dash-item:last-child{border:none}
+.dash-item .di-title{font-weight:600}.dash-item .di-sub{font-size:.72rem;color:var(--gray-400);margin-top:2px}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:6px}
+.filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.filter-bar input,.filter-bar select{padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;font-size:.85rem}
+.filter-bar input:focus,.filter-bar select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+.filter-bar input{flex:1;min-width:140px}
+.inv-item{background:#fff;border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.inv-name{font-weight:600;font-size:.88rem}.inv-sub{font-size:.75rem;color:var(--gray-400)}
+.inv-stock{display:flex;align-items:center;gap:4px}
+.stock-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--gray-300);background:#fff;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center}
+.stock-btn:hover{background:var(--gray-100)}
+.stock-num{min-width:32px;text-align:center;font-weight:700;font-size:.95rem}
+.badge{padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.b-green{background:var(--success-light);color:var(--success)}.b-red{background:var(--danger-light);color:var(--danger)}
+.b-orange{background:var(--warning-light);color:var(--warning)}.b-gray{background:var(--gray-200);color:var(--gray-500)}.b-blue{background:var(--primary-light);color:var(--primary)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center;padding:14px}
+.modal-overlay.active{display:flex}
+.modal-box{background:#fff;border-radius:var(--radius);width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:modalIn .2s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal-header{padding:14px 18px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center}
+.modal-header h2{font-size:1rem;font-weight:700}
+.modal-header button{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--gray-400)}
+.modal-header button:hover{color:var(--gray-700)}
+form{padding:18px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:.8rem;font-weight:600;color:var(--gray-600);margin-bottom:3px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 10px;border:1px solid var(--gray-300);border-radius:8px;font-size:.85rem;font-family:inherit;outline:none;transition:border .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-actions{display:flex;justify-content:flex-end;gap:6px;padding-top:10px;border-top:1px solid var(--gray-200);margin-top:6px}
+.empty-state{text-align:center;padding:24px;color:var(--gray-400);font-size:.85rem}
+/* Login */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1e293b 0%,#334155 100%);padding:16px}
+.login-card{background:#fff;border-radius:16px;padding:36px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-icon{text-align:center;font-size:2.5rem;margin-bottom:10px}
+.login-card h1{font-size:1.2rem;text-align:center;color:#1f2937;margin-bottom:3px}
+.login-sub{text-align:center;font-size:.82rem;color:#6b7280;margin-bottom:24px}
+.login-error{background:#fef2f2;color:#dc2626;padding:8px 12px;border-radius:6px;font-size:.82rem;margin-bottom:14px;display:none;border:1px solid #fecaca}
+.login-error.show{display:block}
+.login-card .form-group input{padding:10px 12px}
+.login-card button[type="submit"]{width:100%;padding:11px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:.92rem;font-weight:600;cursor:pointer;margin-top:6px}
+.login-card button[type="submit"]:hover{background:#1d4ed8}
+@media(max-width:768px){.menu-toggle{display:block}.header-nav{display:none}.app-main{padding:10px}.equipment-panel{width:100vw;max-width:100vw}.stats-grid{grid-template-columns:repeat(2,1fr)}.dash-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.user-name{display:none}}
+@media(max-width:480px){.stat-num{font-size:1.5rem}}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div class="login-page" id="loginPage">
+<div class="login-card">
+<div class="login-icon">🔐</div>
+<h1>Factory Maintenance</h1>
+<p class="login-sub">Σύστημα Διαχείρισης Συντήρησης</p>
+<div class="login-error" id="loginError"></div>
+<form id="loginForm">
+<div class="form-group"><label>Username</label><input type="text" id="loginUser" required autocomplete="username" autofocus></div>
+<div class="form-group"><label>Κωδικός</label><input type="password" id="loginPass" required autocomplete="current-password"></div>
+<button type="submit">🔓 Είσοδος</button>
+</form>
+</div>
+</div>
+
+<!-- APP (hidden until login) -->
+<div id="appContainer" style="display:none">
+<header class="app-header">
+<div class="header-left">
+<button class="menu-toggle" id="menuToggle">☰</button>
+<h1>🏭 Factory Maintenance</h1>
+</div>
+<nav class="header-nav">
+<a class="nav-link active" data-view="map">🗺️ Χάρτης</a>
+<a class="nav-link" data-view="dashboard">📊 Dashboard</a>
+<a class="nav-link" data-view="inventory">📦 Αποθήκη</a>
+</nav>
+<div class="user-menu">
+<button class="user-btn" onclick="toggleDropdown()">
+<span class="user-avatar" id="userAvatar">?</span>
+<span class="user-name" id="userName">...</span><span>▾</span>
+</button>
+<div class="user-dropdown" id="userDropdown">
+<div class="ud-role" id="userRole"></div>
+<button onclick="showChangePw()">🔑 Αλλαγή Κωδικού</button>
+<button id="adminUsersBtn" style="display:none" onclick="openUsers()">👥 Χρήστες</button>
+<hr>
+<button class="ud-logout" onclick="logout()">🚪 Αποσύνδεση</button>
+</div>
+</div>
+</header>
+
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-header"><span>🏭 Factory</span><button onclick="document.getElementById('sidebar').classList.remove('open')">&times;</button></div>
+<nav>
+<a class="sidebar-link active" data-view="map">🗺️ Χάρτης</a>
+<a class="sidebar-link" data-view="dashboard">📊 Dashboard</a>
+<a class="sidebar-link" data-view="inventory">📦 Αποθήκη</a>
+</nav>
+</aside>
+
+<main class="app-main">
+<!-- MAP -->
+<section class="view active" id="view-map">
+<div class="map-toolbar">
+<select id="mapSelector"><option value="">-- Φόρτωση χάρτη --</option></select>
+<div class="toolbar-actions">
+<label class="btn btn-outline btn-sm" for="uploadMap" id="uploadLabel">📤 Ανέβασε Σκάνταλ</label>
+<input type="file" id="uploadMap" accept="image/*" hidden>
+<button class="btn btn-primary btn-sm" id="addEqBtn" disabled onclick="enableAddMode()">+ Μηχάνημα</button>
+<button class="btn btn-danger btn-sm" id="delMapBtn" style="display:none" onclick="deleteCurrentMap()">🗑️</button>
+</div>
+</div>
+<div class="map-container" id="mapContainer">
+<div class="map-empty" id="mapEmpty">
+<div class="empty-icon">🗺️</div>
+<h3>Δεν υπάρχει σκάνταλ</h3>
+<p>Ανέβασε μια εικόνα του εργοστασίου</p>
+<label class="btn btn-primary" for="uploadMapEmpty">📤 Ανέβασε Εικόνα</label>
+<input type="file" id="uploadMapEmpty" accept="image/*" hidden>
+</div>
+<div class="map-wrapper" id="mapWrapper" style="display:none">
+<img id="factoryImage" src="" alt="Factory Map" draggable="false">
+<div id="markersLayer"></div>
+</div>
+<div class="map-hint" id="mapHint">💡 Κλικ στην εικόνα για να προσθέσεις μηχάνημα</div>
+</div>
+</section>
+<!-- DASHBOARD -->
+<section class="view" id="view-dashboard"><h2>📊 Dashboard</h2><div class="stats-grid" id="statsGrid"></div><div class="dash-grid"><div class="card"><h3>📋 Πρόσφατες Εργασίες</h3><div id="recentLogs"></div></div><div class="card"><h3>⚠️ Low Stock</h3><div id="lowStockList"></div></div><div class="card"><h3>🏭 Προβληματικά</h3><div id="problemEquip"></div></div><div class="card"><h3>📅 Επόμενες</h3><div id="upcomingMaint"></div></div></div></section>
+<!-- INVENTORY -->
+<section class="view" id="view-inventory">
+<div class="page-header"><h2>📦 Αποθήκη</h2><button class="btn btn-primary" onclick="showInvForm()">+ Νέο Είδος</button></div>
+<div class="filter-bar"><input type="text" id="invSearch" placeholder="🔍..." oninput="renderInv()"><select id="invStockFilter" onchange="renderInv()"><option value="">Όλα</option><option value="low">Χαμηλό</option><option value="out">Εξαντλημένο</option></select></div>
+<div id="inventoryList"></div>
+</section>
+</main>
+
+<!-- PANEL -->
+<div class="panel-overlay" id="panelOverlay" onclick="closePanel()"></div>
+<aside class="equipment-panel" id="equipPanel">
+<div class="panel-header"><h2 id="panelTitle">Μηχάνημα</h2><button class="btn-close" onclick="closePanel()">&times;</button></div>
+<div class="panel-body" id="panelBody"></div>
+</aside>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="eqModal"><div class="modal-box"><div class="modal-header"><h2 id="eqModalTitle">Νέο Μηχάνημα</h2><button onclick="closeModal('eqModal')">&times;</button></div>
+<form id="eqForm" onsubmit="saveEq(event)"><input type="hidden" id="eqId"><input type="hidden" id="eqPosX"><input type="hidden" id="eqPosY">
+<div class="form-group"><label>Όνομα *</label><input type="text" id="eqName" required></div>
+<div class="form-row"><div class="form-group"><label>Κωδικός</label><input type="text" id="eqCode"></div><div class="form-group"><label>Τύπος</label><input type="text" id="eqType"></div></div>
+<div class="form-row"><div class="form-group"><label>Κατασκευαστής</label><input type="text" id="eqMfr"></div><div class="form-group"><label>Μοντέλο</label><input type="text" id="eqModel"></div></div>
+<div class="form-row"><div class="form-group"><label>Serial</label><input type="text" id="eqSerial"></div><div class="form-group"><label>Εγκατάσταση</label><input type="date" id="eqDate"></div></div>
+<div class="form-group"><label>Σημειώσεις</label><textarea id="eqNotes" rows="2"></textarea></div>
+<div class="form-actions"><button type="button" class="btn btn-outline" onclick="closeModal('eqModal')">Ακύρωση</button><button type="submit" class="btn btn-primary">Αποθήκευση</button></div>
+</form></div></div>
+
+<div class="modal-overlay" id="logModal"><div class="modal-box"><div class="modal-header"><h2 id="logModalTitle">Νέα Καταχώρηση</h2><button onclick="closeModal('logModal')">&times;</button></div>
+<form id="logForm" onsubmit="saveLog(event)"><input type="hidden" id="logId"><input type="hidden" id="logEquipId">
+<div class="form-row"><div class="form-group"><label>Τύπος *</label><select id="logType" required><option value="maintenance">🔧 Συντήρηση</option><option value="breakdown">⚡ Βλάβη</option><option value="repair">🔨 Επισκευή</option><option value="inspection">👁️ Έλεγχος</option><option value="lubrication">🛢️ Λίπανση</option><option value="calibration">🎯 Ρύθμιση</option><option value="other">📝 Άλλο</option></select></div><div class="form-group"><label>Ημ/νία *</label><input type="date" id="logDate" required></div></div>
+<div class="form-group"><label>Τίτλος *</label><input type="text" id="logTitle" required></div>
+<div class="form-group"><label>Περιγραφή</label><textarea id="logDesc" rows="2"></textarea></div>
+<div class="form-row"><div class="form-group"><label>Τεχνικός</label><input type="text" id="logTech"></div><div class="form-group"><label>Διάρκεια (ώρες)</label><input type="number" id="logDur" min="0" step="0.5"></div></div>
+<div class="form-group"><label>Ανταλλακτικά</label><input type="text" id="logParts" placeholder="π.χ. 2x ρουλεμάν"></div>
+<div class="form-row"><div class="form-group"><label>Κόστος (€)</label><input type="number" id="logCost" min="0" step="0.01"></div><div class="form-group"><label>Επόμενο</label><input type="date" id="logNext"></div></div>
+<div class="form-actions"><button type="button" class="btn btn-outline" onclick="closeModal('logModal')">Ακύρωση</button><button type="submit" class="btn btn-primary">Αποθήκευση</button></div>
+</form></div></div>
+
+<div class="modal-overlay" id="invModal"><div class="modal-box"><div class="modal-header"><h2 id="invModalTitle">Νέο Είδος</h2><button onclick="closeModal('invModal')">&times;</button></div>
+<form id="invForm" onsubmit="saveInv(event)"><input type="hidden" id="invId">
+<div class="form-row"><div class="form-group"><label>Όνομα *</label><input type="text" id="invName" required></div><div class="form-group"><label>Κωδικός</label><input type="text" id="invCode"></div></div>
+<div class="form-row"><div class="form-group"><label>Ποσότητα *</label><input type="number" id="invQty" required min="0"></div><div class="form-group"><label>Ελάχ. Stock</label><input type="number" id="invMin" min="0" value="5"></div></div>
+<div class="form-row"><div class="form-group"><label>Τιμή €</label><input type="number" id="invPrice" min="0" step="0.01"></div><div class="form-group"><label>Μονάδα</label><select id="invUnit"><option>τεμ</option><option>kg</option><option>lt</option><option>m</option></select></div></div>
+<div class="form-row"><div class="form-group"><label>Προμηθευτής</label><input type="text" id="invSup"></div><div class="form-group"><label>Τοποθεσία</label><input type="text" id="invLoc"></div></div>
+<div class="form-actions"><button type="button" class="btn btn-outline" onclick="closeModal('invModal')">Ακύρωση</button><button type="submit" class="btn btn-primary">Αποθήκευση</button></div>
+</form></div></div>
+
+<div class="modal-overlay" id="pwModal"><div class="modal-box"><div class="modal-header"><h2>🔑 Αλλαγή Κωδικού</h2><button onclick="closeModal('pwModal')">&times;</button></div>
+<form id="pwForm" onsubmit="changePw(event)">
+<div class="form-group"><label>Τρέχων Κωδικός</label><input type="password" id="pwOld" required></div>
+<div class="form-group"><label>Νέος Κωδικός (min 6)</label><input type="password" id="pwNew" required minlength="6"></div>
+<div class="form-group"><label>Επιβεβαίωση</label><input type="password" id="pwConfirm" required></div>
+<div class="form-actions"><button type="button" class="btn btn-outline" onclick="closeModal('pwModal')">Ακύρωση</button><button type="submit" class="btn btn-primary">Αποθήκευση</button></div>
+</form></div></div>
+
+<div class="modal-overlay" id="usersModal"><div class="modal-box"><div class="modal-header"><h2>👥 Χρήστες</h2><button onclick="closeModal('usersModal')">&times;</button></div>
+<div style="padding:14px 18px;">
+<button class="btn btn-primary btn-sm" onclick="showAddUser()">+ Νέος</button>
+<div id="addUserForm" style="display:none;margin:10px 0;padding:12px;background:var(--gray-50);border-radius:8px;">
+<div class="form-row"><div class="form-group"><label>Username</label><input type="text" id="newUsername" required></div><div class="form-group"><label>Όνομα</label><input type="text" id="newFullName"></div></div>
+<div class="form-row"><div class="form-group"><label>Κωδικός</label><input type="password" id="newPass" required minlength="6"></div><div class="form-group"><label>Ρόλος</label><select id="newRole"><option value="technician">Τεχνικός</option><option value="supervisor">Επόπτης</option><option value="admin">Διαχειριστής</option></select></div></div>
+<div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn btn-outline btn-sm" onclick="document.getElementById('addUserForm').style.display='none'">Ακύρωση</button><button class="btn btn-primary btn-sm" onclick="createUser()">Δημιουργία</button></div>
+</div>
+<div id="usersList"></div>
+</div></div></div>
+</div>
+
+<script>
+// ===== DB (localStorage) =====
+const DB={};
+['users','maps','equipment','logs','inventory'].forEach(k=>{
+    DB[k]=JSON.parse(localStorage.getItem('fm_'+k)||'[]');
+});
+function save(k){localStorage.setItem('fm_'+k,JSON.stringify(DB[k]));}
+function id(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5);}
+
+// ===== AUTH =====
+let currentUser=null;
+function initAuth(){
+    const u=JSON.parse(sessionStorage.getItem('fm_user')||'null');
+    if(!u){showLogin();return false;}
+    currentUser=u;showApp();return true;
+}
+function showLogin(){
+    document.getElementById('loginPage').style.display='';
+    document.getElementById('appContainer').style.display='none';
+}
+function showApp(){
+    document.getElementById('loginPage').style.display='none';
+    document.getElementById('appContainer').style.display='';
+    updateUserUI();loadMaps();loadDashboard();renderInv();
+}
+document.getElementById('loginForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    const u=document.getElementById('loginUser').value.toLowerCase().trim();
+    const p=document.getElementById('loginPass').value;
+    const user=DB.users.find(x=>x.username===u&&x.password===p);
+    if(!user){document.getElementById('loginError').textContent='Λάθος username ή password';document.getElementById('loginError').classList.add('show');return;}
+    currentUser={id:user.id,username:user.username,fullName:user.fullName,role:user.role};
+    sessionStorage.setItem('fm_user',JSON.stringify(currentUser));
+    showApp();
+});
+function logout(){sessionStorage.removeItem('fm_user');currentUser=null;showLogin();}
+function updateUserUI(){
+    document.getElementById('userAvatar').textContent=currentUser.username.charAt(0).toUpperCase();
+    document.getElementById('userName').textContent=currentUser.fullName||currentUser.username;
+    const rl={admin:'Διαχειριστής',supervisor:'Επόπτης',technician:'Τεχνικός'};
+    document.getElementById('userRole').textContent=rl[currentUser.role]||'';
+    const a=currentUser.role==='admin';
+    document.getElementById('adminUsersBtn').style.display=a?'':'none';
+    document.getElementById('uploadLabel').style.display=a?'':'none';
+    document.getElementById('delMapBtn').style.display=a&&currentMapId?'':'none';
+}
+function canDelete(){return currentUser&&['admin','supervisor'].includes(currentUser.role);}
+
+// ===== NAV =====
+document.querySelectorAll('[data-view]').forEach(el=>{
+    el.addEventListener('click',e=>{e.preventDefault();switchView(el.dataset.view);});
+});
+function switchView(v){
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('[data-view]').forEach(x=>x.classList.remove('active'));
+    document.getElementById('view-'+v).classList.add('active');
+    document.querySelectorAll('[data-view="'+v+'"]').forEach(x=>x.classList.add('active'));
+    document.getElementById('sidebar').classList.remove('open');
+    if(v==='dashboard')loadDashboard();if(v==='inventory')renderInv();
+}
+document.getElementById('menuToggle').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+function toggleDropdown(){document.getElementById('userDropdown').classList.toggle('show');}
+document.addEventListener('click',e=>{if(!e.target.closest('.user-menu'))document.getElementById('userDropdown')?.classList.remove('show');});
+
+// ===== MAPS =====
+let currentMapId=null;let equipmentList=[];let addingMode=false;let selectedEq=null;
+const defaultUser={id:'u1',username:'admin',password:'admin123',fullName:'Διαχειριστής',role:'admin',created:Date.now()};
+if(!DB.users.length){DB.users.push(defaultUser);save('users');}
+
+function loadMaps(){
+    const sel=document.getElementById('mapSelector');
+    sel.innerHTML='<option value="">-- Επιλέξτε Χάρτη --</option>';
+    DB.maps.forEach(m=>{sel.innerHTML+='<option value="'+m.id+'">'+m.name+'</option>';});
+    if(DB.maps.length&&!currentMapId){currentMapId=DB.maps[0].id;sel.value=currentMapId;}
+    if(currentMapId){sel.value=currentMapId;}
+    renderMap();
+}
+document.getElementById('mapSelector').addEventListener('change',function(){currentMapId=this.value||null;renderMap();});
+document.getElementById('uploadMap').addEventListener('change',handleMapUpload);
+document.getElementById('uploadMapEmpty').addEventListener('change',handleMapUpload);
+
+function handleMapUpload(e){
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(ev){
+        const map={id:id(),name:file.name.replace(/\.[^/.]+$/,''),imageData:ev.target.result,created:Date.now()};
+        DB.maps.push(map);save('maps');currentMapId=map.id;loadMaps();
+    };
+    reader.readAsDataURL(file);e.target.value='';
+}
+function deleteCurrentMap(){
+    if(!currentMapId||currentUser.role!=='admin')return;
+    if(!confirm('⚠️ Διαγραφή χάρτη και ΟΛΩΝ των μηχανημάτων;'))return;
+    if(!confirm('Σίγουρα; Αυτό δεν αναιρείται!'))return;
+    DB.equipment=DB.equipment.filter(e=>e.mapId!==currentMapId);
+    DB.maps=DB.maps.filter(m=>m.id!==currentMapId);
+    save('equipment');save('maps');currentMapId=null;loadMaps();
+}
+function renderMap(){
+    const empty=document.getElementById('mapEmpty'),wrap=document.getElementById('mapWrapper');
+    const hint=document.getElementById('mapHint'),addBtn=document.getElementById('addEqBtn');
+    const delBtn=document.getElementById('delMapBtn'),upLabel=document.getElementById('uploadLabel');
+    if(!currentMapId){empty.style.display='';wrap.style.display='none';hint.style.display='none';addBtn.disabled=true;delBtn.style.display='none';return;}
+    const map=DB.maps.find(m=>m.id===currentMapId);if(!map){currentMapId=null;renderMap();return;}
+    empty.style.display='none';wrap.style.display='';hint.style.display='';addBtn.disabled=false;
+    delBtn.style.display=currentUser.role==='admin'?'':'none';
+    document.getElementById('factoryImage').src=map.imageData;
+    equipmentList=DB.equipment.filter(e=>e.mapId===currentMapId);
+    renderMarkers();
+}
+function renderMarkers(){
+    const layer=document.getElementById('markersLayer');layer.innerHTML='';
+    equipmentList.forEach(eq=>{
+        const m=document.createElement('div');m.className='marker marker-'+eq.status;
+        m.style.left=eq.posX+'%';m.style.top=eq.posY+'%';
+        m.textContent=eq.code?eq.code.substring(0,2).toUpperCase():eq.name.charAt(0).toUpperCase();
+        m.title=eq.name+(eq.code?' ('+eq.code+')':'');
+        m.addEventListener('click',e=>{e.stopPropagation();openPanel(eq.id);});
+        layer.appendChild(m);
+    });
+}
+function enableAddMode(){
+    if(!currentMapId){alert('Πρώτα φόρτωσε χάρτη!');return;}
+    addingMode=true;
+    document.getElementById('mapHint').textContent='👆 Κάνε κλικ στο σημείο';
+    document.getElementById('factoryImage').style.cursor='crosshair';
+}
+document.getElementById('factoryImage').addEventListener('click',e=>{
+    if(!addingMode||!currentMapId)return;
+    const r=e.target.getBoundingClientRect();
+    const px=((e.clientX-r.left)/r.width*100),py=((e.clientY-r.top)/r.height*100);
+    document.getElementById('eqForm').reset();document.getElementById('eqId').value='';
+    document.getElementById('eqPosX').value=px.toFixed(4);document.getElementById('eqPosY').value=py.toFixed(4);
+    document.getElementById('eqModalTitle').textContent='Νέο Μηχάνημα';
+    addingMode=false;document.getElementById('mapHint').textContent='💡 Κλικ στην εικόνα για να προσθέσεις μηχάνημα';
+    document.getElementById('factoryImage').style.cursor='crosshair';
+    openModal('eqModal');
+});
+
+// ===== EQUIPMENT =====
+function saveEq(e){
+    e.preventDefault();
+    const eid=document.getElementById('eqId').value;
+    const d={mapId:currentMapId,name:document.getElementById('eqName').value,code:document.getElementById('eqCode').value,type:document.getElementById('eqType').value,status:'operational',manufacturer:document.getElementById('eqMfr').value,model:document.getElementById('eqModel').value,serial:document.getElementById('eqSerial').value,installDate:document.getElementById('eqDate').value,notes:document.getElementById('eqNotes').value,posX:parseFloat(document.getElementById('eqPosX').value),posY:parseFloat(document.getElementById('eqPosY').value)};
+    if(eid){const idx=DB.equipment.findIndex(x=>x.id===eid);if(idx>=0)d.id=eid,d.created=DB.equipment[idx].created,DB.equipment[idx]=d;}
+    else{d.id=id();d.created=Date.now();DB.equipment.push(d);}
+    save('equipment');closeModal('eqModal');renderMap();
+}
+function editEqFromPanel(){
+    if(!selectedEq||currentUser.role==='technician')return;
+    const eq=selectedEq;
+    document.getElementById('eqId').value=eq.id;document.getElementById('eqPosX').value=eq.posX;document.getElementById('eqPosY').value=eq.posY;
+    document.getElementById('eqName').value=eq.name;document.getElementById('eqCode').value=eq.code||'';document.getElementById('eqType').value=eq.type||'';
+    document.getElementById('eqMfr').value=eq.manufacturer||'';document.getElementById('eqModel').value=eq.model||'';
+    document.getElementById('eqSerial').value=eq.serial||'';document.getElementById('eqDate').value=eq.installDate||'';document.getElementById('eqNotes').value=eq.notes||'';
+    document.getElementById('eqModalTitle').textContent='Επεξεργασία';closePanel();openModal('eqModal');
+}
+function deleteEqFromPanel(){
+    if(!selectedEq||currentUser.role!=='admin')return;
+    if(!confirm('⚠️ ΔΙΑΓΡΑΦΗ ΜΗΧΑΝΗΜΑΤΟΣ\n\n"'+selectedEq.name+'"\n\nΘα διαγραφεί ΜΑΖΙ με το ιστορικό!\nΣυνέχεια;'))return;
+    if(!confirm('Τελευταία ευκαιρία! Γράψε OK στη σκέψη σου.'))return;
+    DB.logs=DB.logs.filter(l=>l.equipId!==selectedEq.id);
+    DB.equipment=DB.equipment.filter(x=>x.id!==selectedEq.id);
+    save('equipment');save('logs');closePanel();renderMap();
+}
+function changeStatus(eqId,st){
+    const eq=DB.equipment.find(x=>x.id===eqId);if(eq){eq.status=st;save('equipment');renderMap();openPanel(eqId);}
+}
+
+// ===== PANEL =====
+function openPanel(eqId){
+    const eq=DB.equipment.find(x=>x.id===eqId);if(!eq)return;selectedEq=eq;
+    const logs=DB.logs.filter(l=>l.equipId===eqId).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    const sl={operational:'Λειτουργικό',maintenance:'Συντήρηση',breakdown:'Βλάβη'};
+    const sc={operational:'b-green',maintenance:'b-orange',breakdown:'b-red'};
+    document.getElementById('panelTitle').innerHTML='<span class="badge '+sc[eq.status]+'">'+sl[eq.status]+'</span> '+eq.name;
+    let h='<div class="eq-status-row"><select onchange="changeStatus(\''+eq.id+'\',this.value)" style="padding:5px 8px;border-radius:6px;font-size:.8rem;border:1px solid var(--gray-300)">';
+    h+='<option value="operational"'+(eq.status==='operational'?' selected':'')+'>✅ OK</option>';
+    h+='<option value="maintenance"'+(eq.status==='maintenance'?' selected':'')+'>🔧 Συντήρηση</option>';
+    h+='<option value="breakdown"'+(eq.status==='breakdown'?' selected':'')+'>⚡ Βλάβη</option></select>';
+    h+='<button class="btn btn-primary btn-sm" onclick="showLogForm()">+ Εργασία</button>';
+    if(currentUser.role!=='technician')h+='<button class="btn btn-outline btn-sm" onclick="editEqFromPanel()">✏️</button>';
+    if(currentUser.role==='admin')h+='<button class="btn btn-danger btn-sm" onclick="deleteEqFromPanel()">🗑️</button>';
+    h+='</div><div class="eq-info-grid">';
+    if(eq.code)h+='<div><div class="eq-info-label">Κωδικός</div><div class="eq-info-value">'+eq.code+'</div></div>';
+    if(eq.type)h+='<div><div class="eq-info-label">Τύπος</div><div class="eq-info-value">'+eq.type+'</div></div>';
+    if(eq.manufacturer)h+='<div><div class="eq-info-label">Κατασκευαστής</div><div class="eq-info-value">'+eq.manufacturer+'</div></div>';
+    if(eq.model)h+='<div><div class="eq-info-label">Μοντέλο</div><div class="eq-info-value">'+eq.model+'</div></div>';
+    if(eq.serial)h+='<div><div class="eq-info-label">Serial</div><div class="eq-info-value">'+eq.serial+'</div></div>';
+    if(eq.installDate)h+='<div><div class="eq-info-label">Εγκατάσταση</div><div class="eq-info-value">'+fmtDate(eq.installDate)+'</div></div>';
+    h+='</div>';
+    if(eq.notes)h+='<p style="font-size:.82rem;color:var(--gray-500);margin-bottom:12px;padding:8px;background:var(--gray-50);border-radius:6px;">📝 '+eq.notes+'</p>';
+    h+='<div class="section-title">📋 Ιστορικό ('+logs.length+')</div>';
+    if(!logs.length)h+='<div class="empty-state">Δεν υπάρχουν καταχωρήσεις</div>';
+    else logs.forEach(l=>{
+        const icons={maintenance:'🔧',breakdown:'⚡',repair:'🔨',inspection:'👁️',lubrication:'🛢️',calibration:'🎯',other:'📝'};
+        h+='<div class="log-entry log-'+l.type+'"><div class="log-header"><span class="log-title">'+(icons[l.type]||'📋')+' '+l.title+'</span><span class="log-date">'+fmtDate(l.date)+'</span></div>';
+        if(l.desc)h+='<div class="log-desc">'+l.desc+'</div>';
+        h+='<div class="log-meta">';
+        if(l.tech)h+='<span class="log-tag">👷 '+l.tech+'</span>';
+        if(l.duration)h+='<span class="log-tag">⏱️ '+l.duration+'ώρ.</span>';
+        if(l.parts)h+='<span class="log-tag">⚙️ '+l.parts+'</span>';
+        if(l.cost)h+='<span class="log-tag">€'+l.cost+'</span>';
+        if(l.next)h+='<span class="log-tag b-orange" style="background:var(--warning-light);color:var(--warning)">📅 '+fmtDate(l.next)+'</span>';
+        h+='</div><div style="margin-top:6px;display:flex;gap:4px">';
+        if(canDelete())h+='<button class="btn btn-outline btn-sm" onclick="editLog(\''+l.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteLog(\''+l.id+'\')">🗑️</button>';
+        h+='</div></div>';
+    });
+    document.getElementById('panelBody').innerHTML=h;
+    document.getElementById('panelOverlay').classList.add('active');document.getElementById('equipPanel').classList.add('active');
+}
+function closePanel(){document.getElementById('equipPanel').classList.remove('active');document.getElementById('panelOverlay').classList.remove('active');}
+
+// ===== LOGS =====
+function showLogForm(){
+    if(!selectedEq)return;
+    document.getElementById('logForm').reset();document.getElementById('logId').value='';document.getElementById('logEquipId').value=selectedEq.id;
+    document.getElementById('logDate').value=new Date().toISOString().split('T')[0];
+    document.getElementById('logModalTitle').textContent='Νέα — '+selectedEq.name;openModal('logModal');
+}
+function saveLog(e){
+    e.preventDefault();const lid=document.getElementById('logId').value;
+    const d={equipId:document.getElementById('logEquipId').value,type:document.getElementById('logType').value,title:document.getElementById('logTitle').value,desc:document.getElementById('logDesc').value,tech:document.getElementById('logTech').value,date:document.getElementById('logDate').value,duration:document.getElementById('logDur').value,parts:document.getElementById('logParts').value,cost:document.getElementById('logCost').value,next:document.getElementById('logNext').value};
+    if(lid){const idx=DB.logs.findIndex(x=>x.id===lid);if(idx>=0){d.id=lid;d.created=DB.logs[idx].created;DB.logs[idx]=d;}}
+    else{d.id=id();d.created=Date.now();DB.logs.push(d);}
+    save('logs');
+    if(d.type==='breakdown'){const eq=DB.equipment.find(x=>x.id===d.equipId);if(eq){eq.status='breakdown';save('equipment');}}
+    else if(d.type==='maintenance'){const eq=DB.equipment.find(x=>x.id===d.equipId);if(eq){eq.status='operational';save('equipment');}}
+    closeModal('logModal');closePanel();renderMap();setTimeout(()=>openPanel(d.equipId),200);
+}
+function editLog(lid){
+    const l=DB.logs.find(x=>x.id===lid);if(!l)return;
+    document.getElementById('logId').value=l.id;document.getElementById('logEquipId').value=l.equipId;
+    document.getElementById('logType').value=l.type;document.getElementById('logTitle').value=l.title;
+    document.getElementById('logDesc').value=l.desc||'';document.getElementById('logTech').value=l.tech||'';
+    document.getElementById('logDate').value=l.date||'';document.getElementById('logDur').value=l.duration||'';
+    document.getElementById('logParts').value=l.parts||'';document.getElementById('logCost').value=l.cost||'';
+    document.getElementById('logNext').value=l.next||'';document.getElementById('logModalTitle').textContent='Επεξεργασία';closePanel();openModal('logModal');
+}
+function deleteLog(lid){
+    if(!canDelete())return;
+    if(!confirm('Διαγραφή καταχώρησης;'))return;
+    if(!confirm('Οριστικά;'))return;
+    DB.logs=DB.logs.filter(x=>x.id!==lid);save('logs');closePanel();renderMap();setTimeout(()=>openPanel(selectedEq.id),200);
+}
+
+// ===== INVENTORY =====
+function renderInv(){
+    const s=(document.getElementById('invSearch')?.value||'').toLowerCase();
+    const sf=document.getElementById('invStockFilter')?.value||'';
+    let items=DB.inventory.filter(i=>{
+        const ms=!s||i.name.toLowerCase().includes(s)||(i.code&&i.code.toLowerCase().includes(s));
+        let mf=true;if(sf==='low')mf=i.qty<=i.min&&i.qty>0;if(sf==='out')mf=i.qty===0;
+        return ms&&mf;
+    });
+    const el=document.getElementById('inventoryList');
+    if(!items.length){el.innerHTML='<div class="empty-state">Δεν βρέθηκαν είδη</div>';return;}
+    el.innerHTML=items.map(i=>{
+        const sc=i.qty===0?'b-red':i.qty<=i.min?'b-orange':'b-green';
+        const sl=i.qty===0?'Εξαντλημένο':i.qty<=i.min?'Χαμηλό':'OK';
+        return '<div class="inv-item"><div><div class="inv-name">'+i.name+(i.code?' <span style="color:var(--gray-400)">('+i.code+')</span>':'')+'</div><div class="inv-sub">'+(i.supplier?i.supplier+' • ':'')+(i.location?'📍 '+i.location+' • ':'')+(i.price?'€'+i.price.toFixed(2):'')+'</div></div><div class="inv-stock"><button class="stock-btn" onclick="adjStock(\''+i.id+'\',-1)">−</button><span class="stock-num">'+i.qty+'</span><span style="font-size:.72rem;color:var(--gray-400)">'+i.unit+'</span><button class="stock-btn" onclick="adjStock(\''+i.id+'\',1)">+</button></div><span class="badge '+sc+'">'+sl+'</span><div style="display:flex;gap:4px"><button class="btn btn-outline btn-sm" onclick="editInvItem(\''+i.id+'\')">✏️</button>'+(canDelete()?'<button class="btn btn-danger btn-sm" onclick="delInvItem(\''+i.id+'\')">🗑️</button>':'')+'</div></div>';
+    }).join('');
+}
+function showInvForm(){document.getElementById('invForm').reset();document.getElementById('invId').value='';document.getElementById('invModalTitle').textContent='Νέο Είδος';openModal('invModal');}
+function saveInv(e){
+    e.preventDefault();const eid=document.getElementById('invId').value;
+    const d={name:document.getElementById('invName').value,code:document.getElementById('invCode').value,qty:parseInt(document.getElementById('invQty').value)||0,min:parseInt(document.getElementById('invMin').value)||5,price:parseFloat(document.getElementById('invPrice').value)||0,unit:document.getElementById('invUnit').value,supplier:document.getElementById('invSup').value,location:document.getElementById('invLoc').value};
+    if(eid){const idx=DB.inventory.findIndex(x=>x.id===eid);if(idx>=0)d.id=eid,DB.inventory[idx]=d;}
+    else{d.id=id();DB.inventory.push(d);}
+    save('inventory');closeModal('invModal');renderInv();
+}
+function adjStock(iid,delta){const i=DB.inventory.find(x=>x.id===iid);if(i){i.qty=Math.max(0,i.qty+delta);save('inventory');renderInv();}}
+function editInvItem(iid){
+    const i=DB.inventory.find(x=>x.id===iid);if(!i)return;
+    document.getElementById('invId').value=i.id;document.getElementById('invName').value=i.name;document.getElementById('invCode').value=i.code||'';
+    document.getElementById('invQty').value=i.qty;document.getElementById('invMin').value=i.min;document.getElementById('invPrice').value=i.price||'';
+    document.getElementById('invUnit').value=i.unit;document.getElementById('invSup').value=i.supplier||'';document.getElementById('invLoc').value=i.location||'';
+    document.getElementById('invModalTitle').textContent='Επεξεργασία';openModal('invModal');
+}
+function delInvItem(iid){if(!canDelete())return;if(!confirm('Διαγραφή είδους;'))return;DB.inventory=DB.inventory.filter(x=>x.id!==iid);save('inventory');renderInv();}
+
+// ===== DASHBOARD =====
+function loadDashboard(){
+    const total=DB.equipment.length,ok=DB.equipment.filter(x=>x.status==='operational').length,bd=DB.equipment.filter(x=>x.status==='breakdown').length;
+    const month=new Date().toISOString().slice(0,7),ml=DB.logs.filter(l=>l.date&&l.date.startsWith(month)).length;
+    const ls=DB.inventory.filter(i=>i.qty<=i.min);
+    document.getElementById('statsGrid').innerHTML='<div class="stat-card sc-blue"><div class="stat-num">'+total+'</div><div class="stat-label">ΜΗΧΑΝΗΜΑΤΑ</div></div><div class="stat-card sc-green"><div class="stat-num">'+ok+'</div><div class="stat-label">ΛΕΙΤΟΥΡΓΙΚΑ</div></div><div class="stat-card sc-red"><div class="stat-num">'+bd+'</div><div class="stat-label">ΒΛΑΒΕΣ</div></div><div class="stat-card sc-orange"><div class="stat-num">'+ls.length+'</div><div class="stat-label">LOW STOCK</div></div>';
+    const rl=DB.logs.sort((a,b)=>(b.created||0)-(a.created||0)).slice(0,8);
+    document.getElementById('recentLogs').innerHTML=rl.length?rl.map(l=>{const eq=DB.equipment.find(x=>x.id===l.equipId);const icons={maintenance:'🔧',breakdown:'⚡',repair:'🔨',inspection:'👁️',lubrication:'🛢️',calibration:'🎯',other:'📝'};return '<div class="dash-item"><div class="di-title">'+(icons[l.type]||'📋')+' '+l.title+'</div><div class="di-sub">'+(eq?eq.name:'?')+' • '+fmtDate(l.date)+(l.tech?' • 👷 '+l.tech:'')+'</div></div>';}).join(''):'<div class="empty-state">Δεν υπάρχουν εργασίες</div>';
+    document.getElementById('lowStockList').innerHTML=ls.length?ls.map(i=>'<div class="dash-item"><div class="di-title">📦 '+i.name+'</div><div class="di-sub">'+i.qty+'/'+i.min+' '+i.unit+(i.supplier?' • '+i.supplier:'')+'</div></div>').join(''):'<div class="empty-state">OK ✅</div>';
+    const pb={};DB.logs.filter(l=>l.type==='breakdown').forEach(l=>{pb[l.equipId]=(pb[l.equipId]||0)+1;});
+    const ps=Object.entries(pb).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    document.getElementById('problemEquip').innerHTML=ps.length?ps.map(([eid,c])=>{const eq=DB.equipment.find(x=>x.id===eid);return '<div class="dash-item"><div class="di-title">⚠️ '+(eq?eq.name:'?')+'</div><div class="di-sub">'+c+' βλάβες</div></div>';}).join(''):'<div class="empty-state">Τα πάντα OK 🎉</div>';
+    const up=DB.logs.filter(l=>l.next&&l.next>=new Date().toISOString().split('T')[0]).sort((a,b)=>a.next.localeCompare(b.next)).slice(0,5);
+    document.getElementById('upcomingMaint').innerHTML=up.length?up.map(l=>{const eq=DB.equipment.find(x=>x.id===l.equipId);return '<div class="dash-item"><div class="di-title">📅 '+l.title+'</div><div class="di-sub">'+(eq?eq.name:'?')+' • '+fmtDate(l.next)+'</div></div>';}).join(''):'<div class="empty-state">Δεν υπάρχουν</div>';
+}
+
+// ===== PASSWORD =====
+function showChangePw(){document.getElementById('userDropdown').classList.remove('show');document.getElementById('pwForm').reset();openModal('pwModal');}
+function changePw(e){
+    e.preventDefault();const o=document.getElementById('pwOld').value,n=document.getElementById('pwNew').value,c=document.getElementById('pwConfirm').value;
+    if(n!==c){alert('Οι κωδικοί δεν ταιριάζουν!');return;}
+    const user=DB.users.find(u=>u.id===currentUser.id);
+    if(!user||user.password!==o){alert('Λάθος τρέχων κωδικός');return;}
+    user.password=n;save('users');alert('✅ Κωδικός αλλάχθηκε!');closeModal('pwModal');
+}
+
+// ===== USERS =====
+function openUsers(){document.getElementById('userDropdown').classList.remove('show');loadUsers();openModal('usersModal');}
+function loadUsers(){
+    const rl={admin:'Διαχειριστής',supervisor:'Επόπτης',technician:'Τεχνικός'};
+    const rc={admin:'b-red',supervisor:'b-orange',technician:'b-blue'};
+    let h='<table style="width:100%;font-size:.82rem;border-collapse:collapse"><tr style="border-bottom:1px solid var(--gray-200)"><th style="text-align:left;padding:6px">Username</th><th style="text-align:left;padding:6px">Όνομα</th><th style="padding:6px">Ρόλος</th><th style="padding:6px">-</th></tr>';
+    DB.users.forEach(u=>{h+='<tr style="border-bottom:1px solid var(--gray-100)"><td style="padding:6px;font-weight:600">'+u.username+'</td><td style="padding:6px">'+(u.fullName||'-')+'</td><td style="padding:6px;text-align:center"><span class="badge '+rc[u.role]+'">'+rl[u.role]+'</span></td><td style="padding:6px;text-align:center">'+(u.id!==currentUser.id?'<button class="btn btn-danger btn-sm" onclick="delUser(\''+u.id+'\')">🗑️</button>':'')+'</td></tr>';});
+    h+='</table>';document.getElementById('usersList').innerHTML=h;
+}
+function showAddUser(){document.getElementById('addUserForm').style.display='';document.getElementById('newUsername').value='';document.getElementById('newFullName').value='';document.getElementById('newPass').value='';}
+function createUser(){
+    const u=document.getElementById('newUsername').value.trim().toLowerCase(),n=document.getElementById('newFullName').value.trim(),p=document.getElementById('newPass').value,r=document.getElementById('newRole').value;
+    if(!u||p.length<6){alert('Username + κωδικός min 6 χαρακτήρες');return;}
+    if(DB.users.find(x=>x.username===u)){alert('Username υπάρχει ήδη');return;}
+    DB.users.push({id:id(),username:u,password:p,fullName:n,role:r,created:Date.now()});save('users');loadUsers();document.getElementById('addUserForm').style.display='none';
+}
+function delUser(uid){if(!confirm('Διαγραφή χρήστη;'))return;DB.users=DB.users.filter(u=>u.id!==uid);save('users');loadUsers();}
+
+// ===== MODALS =====
+function openModal(id){document.getElementById(id).classList.add('active');}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('active');});});
+
+// ===== UTILS =====
+function fmtDate(d){if(!d)return'';return new Date(d).toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'});}
+
+// ===== INIT =====
+initAuth();
+</script>
+</body>
+</html>

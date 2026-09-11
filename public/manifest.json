@@ -1,0 +1,24 @@
+{
+    "name": "Factory Maintenance",
+    "short_name": "Factory Maint",
+    "description": "Σύστημα Διαχείρισης Συντήρησης Εργοστασίου",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1e293b",
+    "theme_color": "#1e293b",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/img/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/img/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

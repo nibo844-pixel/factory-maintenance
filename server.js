@@ -93,6 +93,14 @@ async function initDB() {
         );
     `);
 
+    // Migration: add image_data column if missing
+    try {
+        db.run("ALTER TABLE maps ADD COLUMN image_data TEXT");
+        console.log('  ✅ Added image_data column');
+    } catch(e) {
+        // Column already exists, ignore
+    }
+
     // Create default admin
     const adminCheck = db.exec("SELECT COUNT(*) as c FROM users WHERE username = 'admin'");
     if (!adminCheck[0] || adminCheck[0].values[0][0] === 0) {

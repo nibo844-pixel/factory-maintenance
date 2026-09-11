@@ -64,18 +64,36 @@ async function loadMaps(){
     if(currentMapId)sel.value=currentMapId;
     renderMap();
 }
+function compressImage(file, maxWidth, quality) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height;
+                if (w > maxWidth) { h = h * maxWidth / w; w = maxWidth; }
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 async function handleMapUpload(e){
     const file=e.target.files[0];if(!file)return;
-    // Show loading
-    document.getElementById('mapHint').textContent='⏳ Ανέβασμα εικόνας...';
-    const reader=new FileReader();
-    reader.onload=async ev=>{
-        try{
-            const r=await fetch(API+'/maps',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:file.name.replace(/\.[^/.]+$/,''),imageData:ev.target.result})});
-            if(!r.ok){const err=await r.json();throw new Error(err.error||'Upload failed');}
-            const map=await r.json();currentMapId=map.id;loadMaps();
-        }catch(err){alert('Σφάλμα: '+err.message);document.getElementById('mapHint').textContent='💡 Κλικ στην εικόνα';}
-    };reader.readAsDataURL(file);e.target.value='';
+    document.getElementById('mapHint').textContent='⏳ Συμπίεση & ανέβασμα...';
+    try{
+        const imageData = await compressImage(file, 1200, 0.7);
+        const r=await fetch(API+'/maps',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:file.name.replace(/\.[^/.]+$/,''),imageData:imageData})});
+        if(!r.ok){const err=await r.json();throw new Error(err.error||'Upload failed');}
+        const map=await r.json();currentMapId=map.id;loadMaps();
+    }catch(err){alert('Σφάλμα: '+err.message);document.getElementById('mapHint').textContent='💡 Κλικ στην εικόνα';}
+    e.target.value='';
 }
 async function deleteCurrentMap(){
     if(!currentMapId||currentUser.role!=='admin')return;
